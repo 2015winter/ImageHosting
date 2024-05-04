@@ -1,2 +1,2 @@
 # MarkDownImages
-Store images used to other repositorys
+Personal ImageHost.
