@@ -1,2 +1,2 @@
-# MarkDownImages
+# Image Hosting
 Personal ImageHost.
