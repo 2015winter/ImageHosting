@@ -1,0 +1,10 @@
+# 忽略特定目录
+C/Cloud/**/*
+F/FogOfWar/**/*
+P/PyTorch/**/*
+R/RayTracing/**/*
+R/Rendering/**/*
+
+# 忽略大于10MB的文件
+--exclude-larger-than 18MB
+
