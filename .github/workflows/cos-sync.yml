@@ -55,10 +55,10 @@ jobs:
     - name: Run sync # 执行同步
       run: |
         # 创建独立目录（需绝对路径）
-        mkdir -p /var/.cos-sync-snapshots && chmod 700 /var/.cos-sync-snapshots
+        # mkdir -p /var/.cos-sync-snapshots && chmod 700 /var/.cos-sync-snapshots
         
         set -x  # 开启调试模式
-        coscli sync ./ cos://github-sync/ImageHosting/ --exclude .cosignore --thread-num 5 --delete --snapshot-path /var/.cos-sync-snapshot --recursive
+        coscli sync ./ cos://github-sync/ImageHosting/ --exclude .cosignore --thread-num 5 --delete --recursive # --snapshot-path /var/.cos-sync-snapshot 
 
         # 验证同步结果
         coscli ls cos://github-sync/ --include "*" | head -n 10
