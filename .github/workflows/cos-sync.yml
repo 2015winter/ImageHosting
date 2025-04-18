@@ -56,7 +56,7 @@ jobs:
       run: |
         set -x  # 开启调试模式
         coscli sync ./ cos://github-sync/ImageHosting/ \
-          --exclude-from .cosignore \
+          --exclude .cosignore \
           --thread-num 5 \
           --delete \ # 同步时删除目标端多余文件
           --snapshot-path .cos-sync-snapshot # 记录同步状态
