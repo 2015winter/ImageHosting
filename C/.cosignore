@@ -1,5 +1,5 @@
 # 忽略特定目录
-C/Cloud/**/*
+Cloud/**/*
 
 # 忽略大于10MB的文件
 --exclude-larger-than 18MB

@@ -1,6 +1,6 @@
 # 忽略特定目录
-R/RayTracing/**/*
-R/Rendering/**/*
+RayTracing/**/*
+Rendering/**/*
 
 # 忽略大于10MB的文件
 --exclude-larger-than 18MB

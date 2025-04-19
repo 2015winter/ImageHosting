@@ -75,13 +75,13 @@ jobs:
         # 创建.cosignore文件(如果不存在)
         for letter in {A..Z}; do
           if [ -d $letter ]; then
-            if [! -f $letter.cosignore ]; then
+            if [ ! -f $letter.cosignore ]; then
               echo "# 默认忽略规则" > .cosignore
               echo "*.mp4" >> .cosignore
               echo "*.mov" >> .cosignore
               echo "Private/*" >> .cosignore
             fi
-            echo "=== Current $(letter)/.cosignore ==="
+            echo "=== Current $letter/.cosignore ==="
             cat $letter/.cosignore
           fi
         done
@@ -92,7 +92,7 @@ jobs:
         # 创建独立目录（需绝对路径）
         # mkdir -p /tmp/.cos-sync-snapshots && chmod 700 /tmp/.cos-sync-snapshots
         
-        set -x  # 开启调试模式
+        # set -x  # 开启调试模式
         for letter in {A..Z}; do
           if [ -d $letter ]; then
 
@@ -106,10 +106,11 @@ jobs:
 
             eval "coscli sync ./$letter cos://github-sync/ImageHosting/$letter \
               --recursive \
-              --delete \
-              --thread-num 8 \
+              --delete=true \
+              --force=true \
+              --thread-num=8 \
               ${EXCLUDE_PARAMS} \
-              --snapshot-path /tmp/cos-sync-snapshot"
+              --snapshot-path=/tmp/cos-sync-snapshot"
           fi
         done
 
