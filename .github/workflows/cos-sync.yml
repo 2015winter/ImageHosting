@@ -83,12 +83,18 @@ jobs:
     - name: Run sync # 执行同步
       run: |    
         # 预处理 .cosignore
-        EXCLUDE_FLAGS=""
+        EXCLUDE_PARAMS=""
         while read line; do
           [[ $line =~ ^#.* || -z $line ]] && continue
-          EXCLUDE_FLAGS+="--exclude \"${line}\" "
+          EXCLUDE_PARAMS+="--exclude \"${line}\" "
         done < .cosignore
 
+        # 预处理 --include
+        INCLUDE_PARAMS=""
+        for letter in {{A..Z}}; do
+          INCLUDE_PARAMS+="--include \"$letter/**\" "
+        done
+        
         # 创建独立目录（需绝对路径）
         # mkdir -p /tmp/.cos-sync-snapshots && chmod 700 /tmp/.cos-sync-snapshots
         
@@ -98,12 +104,12 @@ jobs:
           --recursive \
           --delete \
           --thread-num 5 \
-          ${EXCLUDE_FLAGS} \
-          --include "[A-Z]/**" \
+          ${EXCLUDE_PARAMS} \
+          ${INCLUDE_PARAMS} \
           --snapshot-path /tmp/cos-sync-snapshot"
 
         # 验证同步结果
-        coscli ls cos://github-sync/ --include "*" | head -n 10
+        coscli ls cos://github-sync/ --recursive --include "[A-Z]/" | head -n 10
         echo "Sync completed at $(date)"
 
     # - name: Save snapshot to cache
