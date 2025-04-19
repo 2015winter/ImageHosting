@@ -91,7 +91,7 @@ jobs:
 
         # 预处理 --include
         INCLUDE_PARAMS=""
-        for letter in {{A..Z}}; do
+        for letter in {A..Z}; do
           INCLUDE_PARAMS+="--include \"$letter/**\" "
         done
         
