@@ -99,6 +99,7 @@ jobs:
           --delete \
           --thread-num 5 \
           ${EXCLUDE_FLAGS} \
+          --include "[A-Z]/**" \
           --snapshot-path /tmp/cos-sync-snapshot"
 
         # 验证同步结果
