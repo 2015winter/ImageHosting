@@ -16,16 +16,45 @@ jobs:
         chmod +x coscli
         sudo mv coscli /usr/local/bin/coscli
         coscli --version
+        coscli sync --help
         
     - name: Configure coscli
       run: |
         coscli config add -b "${{ secrets.COS_BUCKET }}" -r "${{ secrets.COS_REGION }}" -a "github-sync" -e "cos.${{ secrets.COS_REGION }}.myqcloud.com"
         coscli config set --secret_id "${{ secrets.TENCENT_COS_SECRET_ID }}" --secret_key "${{ secrets.TENCENT_COS_SECRET_KEY }}"
         coscli config show   
+        # # 安全配置方法（避免在日志中暴露敏感信息）
+        # mkdir -p ~/.coscli
+        # cat > ~/.coscli/config.yaml <<EOF
+        # config:
+        #   - alias: github-sync
+        #     name: github-sync
+        #     secretid: ${{ secrets.TENCENT_COS_SECRET_ID }}
+        #     secretkey: ${{ secrets.TENCENT_COS_SECRET_KEY }}
+        #     endpoint: cos.${REGION}.myqcloud.com
+        # buckets:
+        #   - name: ${{ secrets.COS_BUCKET }}
+        #     alias: github-sync
+        #     region: ${{ secrets.COS_REGION }}
+        # EOF
+        # chmod 600 ~/.coscli/config.yaml
+
+    - name: Cache snapshot
+      uses: actions/cache@v4
+      with:
+        path: /tmp/cos-sync-snapshot
+        key: ${{ runner.os }}-cos-snapshot-${{ github.ref }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-cos-snapshot-${{ github.ref }}-
+          ${{ runner.os }}-cos-snapshot-
 
     - name: Validate configuration
       run: |
         echo "=== 开始验证 ==="
+        echo "Workspace path: $(pwd)"
+        echo "COSCLI config path: ~/.coscli/config.yaml"
+        echo "Snapshot path: /tmp/cos-sync-snapshot"
+
         echo "1. 密钥测试..."
         coscli ls cos://github-sync/ || exit 1
 
@@ -39,7 +68,6 @@ jobs:
 
         echo "✅ 所有验证通过"
         
-
     - name: Prepare sync
       run: |
         # 创建.cosignore文件(如果不存在)
@@ -53,16 +81,39 @@ jobs:
         cat .cosignore
         
     - name: Run sync # 执行同步
-      run: |
+      run: |    
+        # 预处理 .cosignore
+        EXCLUDE_FLAGS=""
+        while read line; do
+          [[ $line =~ ^#.* || -z $line ]] && continue
+          EXCLUDE_FLAGS+="--exclude \"${line}\" "
+        done < .cosignore
+
         # 创建独立目录（需绝对路径）
-        # mkdir -p /var/.cos-sync-snapshots && chmod 700 /var/.cos-sync-snapshots
+        # mkdir -p /tmp/.cos-sync-snapshots && chmod 700 /tmp/.cos-sync-snapshots
         
         set -x  # 开启调试模式
-        coscli sync ./ cos://github-sync/ImageHosting/ --exclude .cosignore --thread-num 5 --delete --recursive # --snapshot-path /var/.cos-sync-snapshot 
+        # coscli sync ./ cos://github-sync/ImageHosting/ --exclude .cosignore --thread-num 5 --delete --recursive # --snapshot-path /var/.cos-sync-snapshot 
+        eval "coscli sync ./ cos://github-sync/ImageHosting/ \
+          --recursive \
+          --delete \
+          --thread-num 5 \
+          ${EXCLUDE_FLAGS} \
+          --snapshot-path /tmp/cos-sync-snapshot"
 
         # 验证同步结果
         coscli ls cos://github-sync/ --include "*" | head -n 10
         echo "Sync completed at $(date)"
+
+    # - name: Save snapshot to cache
+    #   if: always()  # 确保异常时也保存快照
+    #   run: |
+    #     # 调试输出（生产环境可移除）
+    #     echo "Snapshot file status:"
+    #     ls -lh /tmp/cos-sync-snapshot/snapshot.db || echo "No snapshot generated"
+
+    #     # 压缩快照文件
+    #     tar czvf /tmp/cos-snapshot-backup.tgz -C /tmp/cos-sync-snapshot .
 
     - name: Upload logs
       if: always()  # 无论成功失败都执行
