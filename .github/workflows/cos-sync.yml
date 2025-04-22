@@ -8,7 +8,9 @@ jobs:
   sync-to-cos:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        lfs: true
     
     - name: Install coscli
       run: |
@@ -71,42 +73,47 @@ jobs:
     - name: Prepare sync
       run: |
         # 创建.cosignore文件(如果不存在)
-        if [ ! -f .cosignore ]; then
-          echo "# 默认忽略规则" > .cosignore
-          echo "*.mp4" >> .cosignore
-          echo "*.mov" >> .cosignore
-          echo "Private/*" >> .cosignore
-        fi
-        echo "=== Current .cosignore ==="
-        cat .cosignore
+        for letter in {A..Z}; do
+          if [ -d $letter ]; then
+            if [ ! -f $letter.cosignore ]; then
+              echo "# 默认忽略规则" > .cosignore
+              echo "*.mp4" >> .cosignore
+              echo "*.mov" >> .cosignore
+              echo "Private/*" >> .cosignore
+            fi
+            echo "=== Current $letter/.cosignore ==="
+            cat $letter/.cosignore
+          fi
+        done
         
     - name: Run sync # 执行同步
       run: |    
-        # 预处理 .cosignore
-        EXCLUDE_PARAMS=""
-        while read line; do
-          [[ $line =~ ^#.* || -z $line ]] && continue
-          EXCLUDE_PARAMS+="--exclude \"${line}\" "
-        done < .cosignore
-
-        # 预处理 --include
-        INCLUDE_PARAMS=""
-        for letter in {A..Z}; do
-          INCLUDE_PARAMS+="--include \"$letter/**\" "
-        done
         
         # 创建独立目录（需绝对路径）
         # mkdir -p /tmp/.cos-sync-snapshots && chmod 700 /tmp/.cos-sync-snapshots
         
-        set -x  # 开启调试模式
-        # coscli sync ./ cos://github-sync/ImageHosting/ --exclude .cosignore --thread-num 5 --delete --recursive # --snapshot-path /var/.cos-sync-snapshot 
-        eval "coscli sync ./ cos://github-sync/ImageHosting/ \
-          --recursive \
-          --delete \
-          --thread-num 5 \
-          ${EXCLUDE_PARAMS} \
-          ${INCLUDE_PARAMS} \
-          --snapshot-path /tmp/cos-sync-snapshot"
+        # set -x  # 开启调试模式
+        for letter in {A..Z}; do
+          if [ -d $letter ]; then
+
+            # 预处理 .cosignore
+            EXCLUDE_PARAMS=""
+            while read line; do
+              [[ $line =~ ^#.* || -z $line ]] && continue
+              EXCLUDE_PARAMS+="--exclude \"$letter/$line\" "
+            done < $letter/.cosignore
+            EXCLUDE_PARAMS+="--exclude $letter/.cosignore"
+            echo "$EXCLUDE_PARAMS"
+
+            coscli sync ./$letter cos://github-sync/ImageHosting/$letter \
+              --recursive \
+              --thread-num=8 \
+              --delete=true \
+              --force=true \
+              $EXCLUDE_PARAMS \
+              --snapshot-path=/tmp/cos-sync-snapshot
+          fi
+        done
 
         # 验证同步结果
         coscli ls cos://github-sync/ --recursive --include "[A-Z]/" | head -n 10

@@ -1,11 +1,6 @@
 # 忽略特定目录
-.git/**/*
-.github/**/*
-C/Cloud/**/*
-F/FogOfWar/**/*
-P/PyTorch/**/*
-R/RayTracing/**/*
-R/Rendering/**/*
+.git/*
+.github/*
 
 # 忽略大于10MB的文件
 --exclude-larger-than 18MB
