@@ -1,0 +1,7 @@
+https://blog.csdn.net/Reborn_Lee/article/details/80959509
+https://blog.51cto.com/u_15338162/3557718
+[Navier-Stokes方程式介紹與推導](https://www.techchickensoup.com/cae/navier-stokes-equation/)
+[描述流場性質的2種方法 – Eulerian v.s. Lagrange](https://www.techchickensoup.com/cae/eulerian-lagrange-description/)  => 固定座標系下流動質點的物理性質變化表示
+
+左半邊為慣性項，講的白話一點就是F = ma中的ma。對於沿著流跡線移動的質點m而言，除了時間加速度以外，還要考慮質點速度帶來的影響。
+從F = ma可以得知Navier-Stokes Equation右半邊為合力項，分別考慮壓力、黏滯力與重力。其中黏滯力為流動阻力，等同於流體內的摩擦力。
