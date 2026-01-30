@@ -1,0 +1,41 @@
+# 文件路径 .github/workflows/server-sync.yml
+# 同步图床到轻量服务器（替代原 cos-sync.yml）
+name: Sync to Server
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '*.md'
+      - '.gitignore'
+      - '.gitattributes'
+
+jobs:
+  sync-to-server:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Shanghai
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+
+    - name: Deploy to server via rsync
+      uses: easingthemes/ssh-deploy@main
+      env:
+        ARGS: "-avzr --delete --exclude='.git/' --exclude='.github/' --exclude='*.md' --exclude='.gitignore' --exclude='.gitattributes' --exclude='.cosignore'"
+        SOURCE: "./"
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        REMOTE_HOST: ${{ secrets.REMOTE_SERVER_HOST }}
+        REMOTE_PORT: ${{ secrets.REMOTE_SERVER_PORT }}
+        REMOTE_USER: ${{ secrets.REMOTE_SERVER_USER }}
+        TARGET: ${{ secrets.REMOTE_SERVER_TARGET }}  # 应设置为 /var/www/images/
+
+    - name: Verify deployment
+      if: success()
+      run: |
+        echo "✅ 图床同步完成"
+        echo "同步时间: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "提交信息: ${{ github.event.head_commit.message }}"
